@@ -1,0 +1,7 @@
+# Lightweight Phase 2 runtime and test dependencies; full resolution in requirements.txt.
+fastapi
+pydantic-settings
+uvicorn
+pytest
+httpx2
+PyJWT[crypto]

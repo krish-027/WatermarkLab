@@ -1,0 +1,14 @@
+{
+  "utils/utils.py": "1a15825a7944ca1481b206e6c8042e7a24f36539db04f448d9d618d3d26c284d",
+  "exceptions/exceptions.py": "9c68b569c79d6429828c690a38558973588063939354e8e01722f91d96d9ea28",
+  "visualize/data_for_visualization.py": "14f9fc32aada1103b53900ceed17127c98ee0e9ae03a6ac8cbe1e441b35580c9",
+  "commit.txt": "01289231ee93f9a49bc943fdffe1c0400e478413f491ca21980284c0ffb3f3ec",
+  "utils/transformers_config.py": "e62590b834a5ffa6c233b2c19bedc530e738fc22926ce7ed1927563253ee3acc",
+  "watermark/base.py": "7d38019ca8d8894886752035e53fa0463879a8f4fee66a33e6baf0064ed8e650",
+  "watermark/kgw/__init__.py": "6b7408a1e7ff2d77059e886ed94c356acae6cbe1afefd56bc3ab809a6c796013",
+  "requirements.txt": "fd39be7c3064dee125846a348ae6c4a25d3e16a2e4d8d18b5818132e084a402c",
+  "watermark/kgw/kgw.py": "3413d9a8715bceee972d31e71ea944017dee423bb2ffc474a6304266e86af475",
+  "LICENSE": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+  "config/KGW.json": "55c19e719d62d7cc36402036d98377a0c41a2200eb7b4f36e1fa2af26a6686b6",
+  "README.md": "f9f5219d9e0e4e7e77ca68af6cbbdf91b44f25720bc77396c70bffbefaffb9de"
+}

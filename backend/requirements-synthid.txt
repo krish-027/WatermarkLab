@@ -1,0 +1,4 @@
+# Runtime additions for the pinned DeepMind core. Install base + KGW pins first.
+# No full synthid-text package, Transformers upgrade, JAX or Bayesian training.
+scipy==1.18.1
+numpy==2.5.4

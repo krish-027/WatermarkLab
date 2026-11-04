@@ -1,0 +1,173 @@
+
+# ============================================================
+# WATERMARKLAB - GIT IGNORE
+# Keep source code, reproducible tests and runtime configuration.
+# Exclude credentials, local environments and internal material.
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 1. Secrets and environment configuration
+# ------------------------------------------------------------
+
+.env
+.env.*
+!.env.example
+!.env.integration.example
+
+*.pem
+*.key
+*.p12
+*.pfx
+
+credentials*.json
+secrets/
+
+# Local caches and generated provisioning material
+.cache/
+/exports/
+
+
+# ------------------------------------------------------------
+# 2. Supabase local state (keep config and migrations)
+# ------------------------------------------------------------
+
+/supabase/.temp/
+/supabase/.branches/
+/supabase/.env
+/supabase/.env.*
+
+# Do not ignore:
+# supabase/config.toml
+# supabase/migrations/
+# supabase/tests/
+# supabase/maintenance/
+
+
+# ------------------------------------------------------------
+# 3. Python environments and generated files
+# ------------------------------------------------------------
+
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+.coverage
+.coverage.*
+htmlcov/
+
+*.egg-info/
+
+
+# ------------------------------------------------------------
+# 4. Node.js and frontend build artifacts
+# ------------------------------------------------------------
+
+node_modules/
+.npm/
+.pnpm-store/
+
+dist/
+build/
+coverage/
+
+playwright-report/
+test-results/
+
+*.tsbuildinfo
+.vite/
+
+
+# ------------------------------------------------------------
+# 5. Generated research data and large model artifacts
+# Root-anchored to avoid ignoring application source folders.
+# ------------------------------------------------------------
+
+/data/
+/datasets/
+/models/
+/reports/
+/vendor/
+
+.huggingface/
+.ipynb_checkpoints/
+
+*.safetensors
+*.pt
+*.pth
+*.onnx
+*.bin
+
+
+# ------------------------------------------------------------
+# 6. Internal WatermarkLab development material
+# ------------------------------------------------------------
+
+/AGENTS.md
+/PROGRESS.md
+/WatermarkLab_Local_Build_Prompt.md
+
+/docs/implementation_plan.md
+/docs/environment.md
+/docs/cli_wsl.md
+/docs/migration_review.md
+/docs/migration_status.md
+
+/docs/phase3_test_results.md
+/docs/phase4_test_results.md
+/docs/phase5a_test_results.md
+/docs/phase5b_test_results.md
+/docs/phase6_test_results.md
+
+/docs/phase7_auth_schema_usage_repair.md
+/docs/phase7_hosted_test_results.md
+/docs/phase7_persistence_proposal.md
+/docs/phase7_test_results.md
+/docs/phase7_working_notes.md
+
+/docs/synthid_compatibility.md
+/docs/superseded/
+
+# Keep phase-specific deployment instructions private
+# until they have been reviewed and rewritten for teammates.
+/docs/phase7_migration_setup.md
+
+
+# ------------------------------------------------------------
+# 7. Internal research and experimental code
+# ------------------------------------------------------------
+
+/backend/research/synthid_dataset_audit.json
+/backend/research/synthid_environment_audit.json
+/backend/research/test_synthid_poc.py
+/backend/research/synthid_reference/
+
+/backend/requirements-synthid-spike.txt
+
+/backend/scripts/audit_synthid_dataset.py
+/backend/scripts/synthid_spike.py
+/backend/scripts/kgw_spike.py
+
+
+# ------------------------------------------------------------
+# 8. Local editor and operating-system artifacts
+# ------------------------------------------------------------
+
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+.idea/
+.vscode/
+
+*.tmp
+*.log
+
+*.sqlite
+*.sqlite3
+*.db

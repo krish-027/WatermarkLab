@@ -1,0 +1,60 @@
+import { test, expect } from '@playwright/test'
+import { existsSync } from 'node:fs'
+
+test('SynthID API requires authentication',async ({request}) => {
+  expect((await request.get('http://localhost:8000/api/v1/synthid/samples')).status()).toBe(401)
+  expect((await request.post('http://localhost:8000/api/v1/analyze',{data:{method:'SYNTHID',text:'A test'}})).status()).toBe(401)
+})
+
+test('real account B SynthID evidence, masks, profile reset and KGW switching', async ({page}) => {
+  test.skip(process.env.WATERMARKLAB_LIVE_TESTS!=='1','Explicit hosted-account opt-in required')
+  test.setTimeout(120000)
+  if(existsSync('../backend/.env.integration')) process.loadEnvFile('../backend/.env.integration')
+  const email=process.env.TEST_USER_B_EMAIL,password=process.env.TEST_USER_B_PASSWORD
+  test.skip(!email || !password,'Confirmed test account is not configured')
+  await page.goto('/access')
+  await page.getByLabel('Email',{exact:true}).fill(email!)
+  await page.getByLabel('Password',{exact:true}).fill(password!)
+  await page.getByRole('button',{name:'Sign in',exact:true}).click()
+  await expect(page.getByRole('heading',{name:'Your research overview.'})).toBeVisible()
+  await page.getByRole('link',{name:'New analysis'}).click()
+  await page.getByLabel('Detector method').selectOption('SYNTHID')
+  await expect(page.getByRole('button',{name:'Analyze SynthID'})).toBeEnabled({timeout:60000})
+  for(const [id,verdict,p] of [['synthid-pilot-1-wm','DETECTED','1.9078e-54'],['synthid-pilot-1-control','NOT DETECTED','7.3912e-1']]) {
+    await page.getByLabel('Load a known sample').selectOption(id)
+    await page.getByRole('button',{name:'Analyze SynthID'}).click()
+    await expect(page.getByRole('heading',{name:verdict,exact:true})).toBeVisible()
+    await expect(page.getByText(p,{exact:true})).toBeVisible()
+    await expect(page.getByText('Native z-score',{exact:true})).toHaveCount(0)
+    await expect(page.getByText('Native p-value',{exact:true})).toBeVisible()
+  }
+  await page.getByLabel('SynthID profile').selectOption('')
+  await page.getByRole('button',{name:'Analyze SynthID'}).click()
+  await expect(page.getByRole('heading',{name:'INCONCLUSIVE',exact:true})).toBeVisible()
+  await page.getByLabel(/Upload UTF-8/).setInputFiles({name:'short.md',mimeType:'text/markdown',buffer:Buffer.from('hello')})
+  await page.getByLabel('SynthID profile').selectOption('synthid-threefry-gpt2-cpu-v1')
+  await page.getByRole('checkbox').check()
+  await page.getByRole('button',{name:'Analyze SynthID'}).click()
+  await expect(page.getByRole('heading',{name:'INCONCLUSIVE',exact:true})).toBeVisible()
+  await expect(page.getByText('1.0000e+0',{exact:true})).toBeVisible()
+  await expect(page.getByText(/Too short after EOS/)).toBeVisible()
+  await page.getByLabel('Load a known sample').selectOption('synthid-pilot-1-wm')
+  await page.getByRole('button',{name:'Analyze SynthID'}).click()
+  await expect(page.getByRole('heading',{name:'DETECTED',exact:true})).toBeVisible()
+  for(const width of [375,768,1440]) {
+    await page.setViewportSize({width,height:1000})
+    expect(await page.evaluate(() => document.documentElement.scrollWidth<=innerWidth)).toBe(true)
+  }
+  await page.getByRole('heading',{name:'Examine the signal.'}).click()
+  await page.evaluate(() => scrollTo(0,0))
+  await page.screenshot({path:'test-results/synthid-analysis.png',fullPage:true})
+  await page.getByLabel('Detector method').selectOption('KGW')
+  await expect(page.getByLabel('KGW profile')).toHaveValue('')
+  await expect(page.getByRole('checkbox')).not.toBeChecked()
+  await expect(page.getByText('Native p-value',{exact:true})).toHaveCount(0)
+  await page.getByLabel('Load a known sample').selectOption('kgw-pilot-1-wm')
+  await page.getByRole('button',{name:'Analyze KGW'}).click()
+  await expect(page.getByText('9.2863',{exact:true})).toBeVisible()
+  await page.getByRole('link',{name:'Research overview'}).click()
+  await page.getByRole('button',{name:'Sign out',exact:true}).click()
+})
