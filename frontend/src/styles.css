@@ -327,3 +327,34 @@ pre code { overflow-wrap: normal; }
 
 .robustness-page p { overflow-wrap: anywhere; }
 .robustness-page fieldset { min-width: 0; }
+
+/* Account navigation uses the existing auth session; the menu is a disclosure. */
+.header-account { margin-left:auto; flex-shrink:0; font-size:12px; font-weight:600; }
+.account-loading { display:inline-block; color:var(--color-muted); font-size:11px; }
+.account-menu { position:relative; }
+.account-trigger { display:flex; align-items:center; gap:9px; border:1px solid var(--color-border); background:white; padding:4px 9px 4px 4px; border-radius:24px; color:var(--color-ink); min-height:44px; }
+.account-trigger:hover { border-color:#c7c9f9; background:#fafaff; }
+.account-avatar { display:inline-flex; flex-shrink:0; align-items:center; justify-content:center; width:34px; height:34px; border-radius:50%; background:#eeedff; color:#4338ca; font-size:12px; font-weight:700; }
+.account-name { max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.account-dropdown { position:absolute; top:calc(100% + 10px); right:0; width:240px; max-width:calc(100vw - 40px); padding:8px; border:1px solid var(--color-border); border-radius:12px; background:white; box-shadow:0 12px 32px #0b122019; }
+.account-dropdown a,.account-dropdown button { display:flex; align-items:center; gap:10px; padding:12px; width:100%; border:0; border-radius:6px; background:white; color:var(--color-ink); text-align:left; font-size:13px; }
+.account-dropdown a:hover,.account-dropdown button:hover { background:var(--color-page); }
+.account-dropdown p { font-size:12px; padding:10px 12px; overflow-wrap:anywhere; }
+.account-dropdown .account-menu-name { border-bottom:1px solid var(--color-border); margin-bottom:4px; color:var(--color-navy); font-weight:600; }
+.account-dropdown [role=alert] { color:#b91c1c; }
+.workspace-actions { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
+.profile-avatar { width:56px; height:56px; font-size:19px; margin-bottom:10px; }
+.profile-card dl { margin:0; }
+.profile-card dl div { padding:18px 0; border-bottom:1px solid var(--color-border); }
+.profile-card dt { font-size:12px; color:var(--color-muted); margin-bottom:6px; }
+.profile-card dd { margin:0; font-size:15px; overflow-wrap:anywhere; }
+@media(max-width:1100px) { .account-name { display:none; } }
+@media(max-width:540px) {
+  .header-inner { gap:10px; }
+  .site-header .brand { font-size:18px; gap:7px; }
+  .site-header .brand-symbol { width:32px; height:32px; }
+  .account-loading { max-width:75px; }
+  .account-trigger { gap:3px; padding-right:5px; }
+  .account-dropdown { right:-45px; }
+  .workspace-actions { flex-direction:column; align-items:stretch; }
+}

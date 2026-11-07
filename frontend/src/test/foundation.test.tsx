@@ -59,7 +59,7 @@ test('protected dashboard sends an unauthenticated visitor to sign in', async ()
 test('registration validates email and password before contacting Supabase', async () => {
   show(<App />, '/access')
   const user = userEvent.setup()
-  await user.click(screen.getByRole('button', { name: 'Create an account' }))
+  await user.click(await screen.findByRole('button', { name: 'Create an account' }))
   await user.type(screen.getByLabelText('Email'), 'invalid')
   await user.type(screen.getByLabelText('Password'), 'short')
   await user.click(screen.getByRole('button', { name: 'Register' }))
@@ -69,7 +69,7 @@ test('registration validates email and password before contacting Supabase', asy
 test('recovery requires a valid email locally', async () => {
   show(<App />, '/access')
   const user=userEvent.setup()
-  await user.click(screen.getByRole('button',{name:'Forgot password?'}))
+  await user.click(await screen.findByRole('button',{name:'Forgot password?'}))
   await user.click(screen.getByRole('button',{name:'Send recovery email'}))
   expect(screen.getByRole('status')).toHaveTextContent('Enter a valid email address first.')
 })

@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { supabase } from '../auth/client'
 import { useAuth } from '../auth/AuthProvider'
-import { apiBaseUrl } from '../lib/api'
+import { accountIdentity } from '../auth/accountIdentity'
 
 const schema = z.object({ email: z.email(), password: z.string().min(8, 'Use at least 8 characters.').max(128) })
 type Credentials = z.infer<typeof schema>
@@ -13,22 +13,28 @@ export function AuthPage() {
   const [mode, setMode] = useState<'login' | 'register' | 'recover'>('login')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
-  const { session } = useAuth()
+  const { session, loading } = useAuth()
   const navigate = useNavigate()
   const form = useForm<Credentials>({ resolver: zodResolver(schema) })
+  useEffect(() => {
+    if (!loading && session && mode !== 'recover') navigate('/dashboard', { replace: true })
+  }, [session, loading, mode, navigate])
+  if (loading) return <div className="container page-shell" role="status">Restoring your session…</div>
   if (!supabase) return <div className="container page-shell"><h1>Setup required</h1><p>Configure the public Supabase values in frontend/.env and restart Vite. Public research pages remain available.</p></div>
   const client = supabase
   async function submit(values: Credentials) {
+    if (mode === 'recover') return
     setBusy(true); setMessage('')
     try {
       const result = mode === 'login' ? await client.auth.signInWithPassword(values) : await client.auth.signUp({ ...values, options: { emailRedirectTo: `${window.location.origin}/auth/callback` } })
       if (result.error) setMessage(result.error.message)
-      else if (result.data.session) navigate('/dashboard')
+      else if (result.data.session) navigate('/dashboard', { replace: true })
       else setMessage('Check your email to confirm your account, then sign in. An existing account may not receive another confirmation.')
     } catch { setMessage('Unable to reach authentication service. Please retry.') }
     finally { setBusy(false) }
   }
   async function emailAction(action: 'recover' | 'resend') {
+    if (busy) return
     const email = form.getValues('email')
     if (!z.email().safeParse(email).success) { setMessage('Enter a valid email address first.'); return }
     setBusy(true)
@@ -38,7 +44,7 @@ export function AuthPage() {
     } catch { setMessage('Unable to reach authentication service.') }
     finally { setBusy(false) }
   }
-  return <div className="container page-shell auth-grid"><aside><p className="eyebrow">YOUR RESEARCH SPACE</p><h1>Keep your<br /><span>evidence connected.</span></h1><p className="page-intro">Use your WatermarkLab account to access private experiment metadata. Raw text is never saved by default.</p></aside><section className="auth-card"><h2>{mode === 'login' ? 'Welcome back' : mode === 'register' ? 'Create an account' : 'Reset your password'}</h2>{session && <p><Link to="/dashboard">Open your dashboard →</Link></p>}<form onSubmit={form.handleSubmit(submit)} noValidate><label>Email<input type="email" autoComplete="email" {...form.register('email')} /></label><p className="field-error">{form.formState.errors.email?.message}</p>{mode !== 'recover' && <><label>Password<input type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} {...form.register('password')} /></label><p className="field-error">{form.formState.errors.password?.message}</p><button className="button button-primary" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Register'}</button></>}{mode === 'recover' && <button className="button button-primary" disabled={busy} type="button" onClick={() => void emailAction('recover')}>Send recovery email</button>}</form><p role="status">{message}</p><div className="auth-links"><button className="text-button" onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setMessage('') }}>{mode === 'register' ? 'Already registered? Sign in' : 'Create an account'}</button><button className="text-button" onClick={() => { setMode(mode === 'recover' ? 'login' : 'recover'); setMessage('') }}>{mode === 'recover' ? 'Back to sign in' : 'Forgot password?'}</button><button className="text-button" disabled={busy} onClick={() => void emailAction('resend')}>Resend confirmation</button></div></section></div>
+  return <div className="container page-shell auth-grid"><aside><p className="eyebrow">YOUR RESEARCH SPACE</p><h1>Keep your<br /><span>evidence connected.</span></h1><p className="page-intro">Use your WatermarkLab account to access private experiment metadata. Raw text is never saved by default.</p></aside><section className="auth-card"><h2>{mode === 'login' ? 'Welcome back' : mode === 'register' ? 'Create an account' : 'Reset your password'}</h2>{session && <p><Link to="/dashboard">Open your dashboard →</Link></p>}<form onSubmit={mode === 'recover' ? event => { event.preventDefault(); void emailAction('recover') } : form.handleSubmit(submit)} noValidate><label>Email<input type="email" autoComplete="email" {...form.register('email')} /></label><p className="field-error">{form.formState.errors.email?.message}</p>{mode !== 'recover' && <><label>Password<input type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} {...form.register('password')} /></label><p className="field-error">{form.formState.errors.password?.message}</p><button className="button button-primary" disabled={busy}>{busy ? 'Please wait…' : mode === 'login' ? 'Sign in' : 'Register'}</button></>}{mode === 'recover' && <button className="button button-primary" disabled={busy} type="submit">Send recovery email</button>}</form><p role="status">{message}</p><div className="auth-links"><button className="text-button" onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setMessage('') }}>{mode === 'register' ? 'Already registered? Sign in' : 'Create an account'}</button><button className="text-button" onClick={() => { setMode(mode === 'recover' ? 'login' : 'recover'); setMessage('') }}>{mode === 'recover' ? 'Back to sign in' : 'Forgot password?'}</button><button className="text-button" disabled={busy} onClick={() => void emailAction('resend')}>Resend confirmation</button></div></section></div>
 }
 
 export function AuthCallback({ reset = false }: { reset?: boolean }) {
@@ -62,19 +68,15 @@ export function AuthCallback({ reset = false }: { reset?: boolean }) {
 }
 
 export function Dashboard() {
-  const { session } = useAuth()
-  const [message, setMessage] = useState('')
-  const [name, setName] = useState('')
-  const [retain, setRetain] = useState(false)
+  const { session, profile, signOut } = useAuth()
   const [busy, setBusy] = useState(false)
-  const navigate = useNavigate()
-  async function api(path: string, method = 'GET', body?: object) {
-    const response = await fetch(`${apiBaseUrl()}/api/v1/${path}`, { method, headers: { Authorization: `Bearer ${session!.access_token}`, 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined })
-    if (!response.ok) throw new Error(response.status === 401 ? 'Session not accepted by API. Sign in again.' : 'API/database setup incomplete or unavailable. Check migration and signing key configuration.')
-    return response.json()
+  const [message, setMessage] = useState('')
+  const identity = accountIdentity(session!.user, profile)
+  async function logout() {
+    setBusy(true); setMessage('')
+    try { await signOut() }
+    catch { setMessage('Sign out failed. Check your connection and try again.') }
+    finally { setBusy(false) }
   }
-  useEffect(() => { let active = true; api('profile').then(row => { if (active && row) { setName(row.display_name); setRetain(row.retain_text) } }).catch(error => { if (active) setMessage(error.message) }); return () => { active = false } }, [session?.access_token])
-  async function save() { setBusy(true); try { await api('profile', 'PUT', { display_name: name, retain_text: retain }); setMessage('Profile saved.') } catch(error) { setMessage((error as Error).message) } finally { setBusy(false) } }
-  async function logout() { setBusy(true); try { const { error } = await supabase!.auth.signOut(); if (error) setMessage(error.message); else navigate('/access') } catch { setMessage('Sign out failed. Check your connection and retry.') } finally { setBusy(false) } }
-  return <div className="container page-shell"><p className="eyebrow">PRIVATE WORKSPACE</p><h1>Your research overview.</h1><p className="page-intro">Signed in as {session?.user.email}. KGW, SynthID research analysis and consented Gemini transformations are available. Saved experiment history arrives in a later phase.</p><div className="auth-card"><Link className="button button-primary" to="/analysis">New analysis</Link><Link className="button button-secondary" to="/transform">Gemini transformations</Link><Link className="button button-secondary" to="/robustness">Robustness Lab (development)</Link><h2>Profile & retention</h2><label>Display name<input value={name} maxLength={100} onChange={e => setName(e.target.value)} /></label><label className="checkbox-label"><input type="checkbox" checked={retain} onChange={e => setRetain(e.target.checked)} />Allow text retention only when I also consent per sample</label><p>Both this setting and per-sample consent are required. Turning this off removes existing retained text; experiment metadata remains.</p><button className="button button-primary" disabled={busy} onClick={() => void save()}>Save profile</button><p role="status">{message}</p></div><div className="hero-actions"><button className="button button-secondary" disabled={busy} onClick={() => void logout()}>Sign out</button><Link className="button button-secondary" to="/access">Password & account access</Link></div></div>
+  return <div className="container page-shell"><p className="eyebrow">PRIVATE WORKSPACE</p><h1>Your research overview.</h1><p className="page-intro">Welcome, {identity.label}. Continue your analysis or compare a controlled transformation under the same detector profile.</p><div className="workspace-actions"><Link className="button button-primary" to="/analysis">New analysis</Link><Link className="button button-secondary" to="/robustness">Robustness Lab (development)</Link><Link className="button button-secondary" to="/transform">Gemini transformations</Link><Link className="button button-secondary" to="/settings">Profile &amp; Settings</Link><button className="button button-secondary" type="button" disabled={busy} onClick={() => void logout()}>{busy ? 'Signing out…' : 'Sign out'}</button></div>{message && <p role="alert">{message}</p>}</div>
 }
